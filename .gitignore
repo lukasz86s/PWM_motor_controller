@@ -1,0 +1,39 @@
+### Build outputs ###
+*.hex
+*.elf
+*.map
+*.lst
+*.o
+*.d
+*.su
+*.bin
+*.eep
+*.lss
+*.sym
+
+### IDE and configs ###
+.vs/             
+*.atsuo          
+*.atsln.user     
+Debug/           
+Release/         
+*.jdebug         
+
+### temp and cache ###
+*.ilk
+*.pdb
+*.tmp
+*.sbr
+*.bsc
+*.bak
+*.dep
+*.log
+
+### packages ###
+packages/        
+
+### Inne ###
+*.cof            
+*.db             
+*.s              
+Thumbs.db        # Windows thumbnail cache
