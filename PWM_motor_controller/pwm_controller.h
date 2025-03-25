@@ -29,8 +29,8 @@ typedef enum {
 	PWM_PINOUT_6 = (1<<5)
 } PWM_Pins_t;
 
-void pwm_init(void);
-void pwm_set_duty(PWM_Channel_t channel, uint8_t value);
+void pwm_Init(void);
+void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value);
 
 
 

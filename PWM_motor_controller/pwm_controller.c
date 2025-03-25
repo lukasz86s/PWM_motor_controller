@@ -13,7 +13,7 @@ volatile uint8_t pwm_channel_duty_list[NUMBER_OF_CHANNELS] = {[0 ... (NUMBER_OF_
 volatile uint16_t pwm_pin_list[NUMBER_OF_CHANNELS] = {PWM_PINOUT_1, PWM_PINOUT_2, PWM_PINOUT_3, PWM_PINOUT_4, PWM_PINOUT_5, PWM_PINOUT_6}; 
 
 
-void pwm_init (void)
+void pwm_Init (void)
 {
 	//set CTC mode on timer2
 	TCCR2A |= (1 << WGM21);		// CTC mode
@@ -24,7 +24,7 @@ void pwm_init (void)
 	TIMSK2 |= (1 << OCIE2A);
 	
 }
-void pwm_set_duty(PWM_Channel_t channel, uint8_t value){
+void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value){
 	pwm_channel_duty_list[channel] = value;
 }
 
