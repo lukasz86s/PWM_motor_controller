@@ -13,10 +13,14 @@
 volatile char RxBuf[RS232_RX_BUF_SIZE];
 volatile uint8_t RxHead;
 volatile uint8_t RxTail;
+char frame_buff[RS232_RX_BUF_SIZE/2];
 
 volatile char TxBuf[RS232_TX_BUF_SIZE];
 volatile uint8_t TxHead;
 volatile uint8_t TxTail;
+
+
+volatile uint8_t new_data_flag ; 
 
 char getc_from_rx_buff(void);
 void putc_into_tx_buff(char data);
@@ -60,6 +64,7 @@ ISR(USART_RX_vect)
 	{
 		RxHead = temp_head;
 		RxBuf[RxHead] = data;
+		if(!new_data_flag) new_data_flag = 1; 
 	}
 	
 }
@@ -114,4 +119,25 @@ void rs232_Send_Data(char *data, uint8_t len)
 	//start transmmit
 	rs232_Set_Tx_Flag();
 	
+}
+
+char * rs232_Get_Frame(void)
+{	
+	// if there is no new data return 
+	if( !new_data_flag)
+		return 0;
+	//buffer length counter
+	uint8_t invalid_data_cnt = RS232_RX_BUF_SIZE;
+	// wait for the start of a frame no longer than the buffer length
+	while(getc_from_rx_buff() != 0x55  )
+	{
+		if(invalid_data_cnt--)return 0;
+	}
+	//get lenght of frame
+	uint8_t frame_length = getc_from_rx_buff();
+	//copy frame with lenght on begin
+	frame_buff[0] = frame_length;
+	for(uint8_t i = 1; i < frame_length; i++) frame_buff[i] = getc_from_rx_buff();
+	
+    return frame_buff;
 }

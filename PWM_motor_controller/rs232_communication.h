@@ -21,7 +21,7 @@ void rs232_Transmit_Byte(char data);
 char rs232_Receive_Byte(void);
 void rs232_Set_Tx_Flag(void);
 void rs232_Send_Data(char *data, uint8_t len);
-
+char * rs232_Get_Frame(void);
 
 
 

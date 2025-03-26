@@ -149,6 +149,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="command_parser.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="command_parser.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
