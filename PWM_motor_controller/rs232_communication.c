@@ -10,20 +10,20 @@
 
 #define F_CPU 16000000UL
 
-volatile char RxBuf[RS232_RX_BUF_SIZE];
+volatile uint8_t RxBuf[RS232_RX_BUF_SIZE];
 volatile uint8_t RxHead;
 volatile uint8_t RxTail;
-char frame_buff[RS232_RX_BUF_SIZE/2];
+uint8_t frame_buff[RS232_RX_BUF_SIZE/2];
 
-volatile char TxBuf[RS232_TX_BUF_SIZE];
+volatile uint8_t TxBuf[RS232_TX_BUF_SIZE];
 volatile uint8_t TxHead;
 volatile uint8_t TxTail;
 
 
 volatile uint8_t new_data_flag ; 
 
-char getc_from_rx_buff(void);
-void putc_into_tx_buff(char data);
+uint8_t getc_from_rx_buff(void);
+void putc_into_tx_buff(uint8_t data);
 
 void rs232_Init(uint32_t baud)
 {	
@@ -40,12 +40,12 @@ void rs232_Init(uint32_t baud)
 	
 	
 }
-void rs232_Transmit_Byte(char data)
+void rs232_Transmit_Byte(uint8_t data)
 {
 	while (!(UCSR0A & (1<<UDRE0))); // wait until ready to send
 	UDR0 = data;
 }
-char rs232_Receive_Byte(void)
+uint8_t rs232_Receive_Byte(void)
 {
     while (!(UCSR0A & (1<<RXC0))); // wait to receive end
     return UDR0;                  	
@@ -54,7 +54,7 @@ char rs232_Receive_Byte(void)
 ISR(USART_RX_vect)
 {
 	uint8_t temp_head;
-	char data;
+	uint8_t data;
 	data = UDR0;
 	temp_head = (RxHead + 1) & RS232_RX_BUF_MASK;
 	if(temp_head == RxTail)
@@ -74,15 +74,14 @@ void rs232_Set_Tx_Flag(void)
 	UCSR0B |= (1<<UDRIE0);
 }
 
-char getc_from_rx_buff(void)
+uint8_t getc_from_rx_buff(void)
 {
-	if( RxHead == RxTail)
-		return 0;
+	if( RxHead == RxTail) return 0;
 	RxTail = (RxTail + 1) & RS232_RX_BUF_MASK;
 	return RxBuf[RxTail];
 }
 
-void putc_into_tx_buff(char data)
+void putc_into_tx_buff(uint8_t data)
 {
 	uint8_t temp_head;
 	//calculate new head position 
@@ -110,7 +109,7 @@ ISR(USART_UDRE_vect)
 	}
 }
 
-void rs232_Send_Data(char *data, uint8_t len)
+void rs232_Send_Data(uint8_t *data, uint8_t len)
 {
 	for(uint8_t i = 0; i < len; i++)
 	{
@@ -121,11 +120,12 @@ void rs232_Send_Data(char *data, uint8_t len)
 	
 }
 
-char * rs232_Get_Frame(void)
+uint8_t* rs232_Get_Frame(void)
 {	
 	// if there is no new data return 
 	if( !new_data_flag)
 		return 0;
+	new_data_flag = 0;
 	//buffer length counter
 	uint8_t invalid_data_cnt = RS232_RX_BUF_SIZE;
 	// wait for the start of a frame no longer than the buffer length
@@ -137,7 +137,10 @@ char * rs232_Get_Frame(void)
 	uint8_t frame_length = getc_from_rx_buff();
 	//copy frame with lenght on begin
 	frame_buff[0] = frame_length;
-	for(uint8_t i = 1; i < frame_length; i++) frame_buff[i] = getc_from_rx_buff();
-	
+	for(uint8_t i = 0; i < frame_length; i++) 
+	{
+		//offset 1 , frame_buff[0] is occupied
+		frame_buff[i+1] = getc_from_rx_buff();
+	}
     return frame_buff;
 }

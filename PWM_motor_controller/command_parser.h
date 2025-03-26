@@ -15,5 +15,5 @@ typedef enum{
 	WRITE_MANY
 	}CMD_byte_t;
 
-
+void Refresh_Channel_Settings(void);
 #endif /* COMMAND_PARSER_H_ */

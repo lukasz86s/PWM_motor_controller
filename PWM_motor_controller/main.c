@@ -10,10 +10,11 @@
 #define F_CPU 16000000UL
 #include <util/delay.h>
 #include "pwm_controller.h"
+#include "command_parser.h"
 #include "rs232_communication.h"
 
 
-char test_data[13] = {'a', 'b', 'c', 'd', 'e', 'f', 'g' };
+
 int main(void)
 {	
 	pwm_Init();
@@ -31,10 +32,10 @@ int main(void)
 		pwm_Set_Duty(PWM_CHANNEL_3, test);
 		pwm_Set_Duty(PWM_CHANNEL_2, 100 - test);
 		pwm_Set_Duty(PWM_CHANNEL_1, 50 + test/2);
-		_delay_ms(1000);
+		_delay_ms(4000);
 		test += 10;
 		if(test > 100)test = 0;
-		rs232_Send_Data("test", 4);
+		Refresh_Channel_Settings();
 		
 		
     }
