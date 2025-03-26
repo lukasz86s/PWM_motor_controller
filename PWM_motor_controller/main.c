@@ -25,6 +25,7 @@ int main(void)
 	sei(); 
     /* Replace with your application code */
 	uint8_t test = 0;
+
     while (1) 
     {
 		pwm_Set_Duty(PWM_CHANNEL_3, test);
@@ -33,7 +34,7 @@ int main(void)
 		_delay_ms(1000);
 		test += 10;
 		if(test > 100)test = 0;
-		rs232_Send_Data("test test", 9);
+		rs232_Send_Data("test", 4);
 		
 		
     }

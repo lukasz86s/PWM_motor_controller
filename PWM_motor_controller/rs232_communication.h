@@ -26,4 +26,5 @@ void rs232_Send_Data(char *data, uint8_t len);
 
 
 
+
 #endif /* RS232_COMMUNICATION_H_ */
