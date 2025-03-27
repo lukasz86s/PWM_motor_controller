@@ -4,10 +4,12 @@
  * Created: 26.03.2025 10:14:23
  *  Author: surmi
  */ 
-#include "component-version.h"
+#include "pwm_controller.h"
 #include "rs232_communication.h"
 
-#define MAX_DATA_LEN 10
+#ifndef MAX_PWM_CHANNELS
+	#define MAX_PWM_CHANNELS 10
+#endif
 typedef enum{
 	FRAME_LEN,
 	CMD,
@@ -19,8 +21,8 @@ typedef struct
 {	
 	uint8_t function;
 	uint8_t channels_to_set;
-	uint8_t channel_number[MAX_DATA_LEN];
-	uint8_t channel_value[MAX_DATA_LEN];
+	uint8_t channel_number[MAX_PWM_CHANNELS];
+	uint8_t channel_value[MAX_PWM_CHANNELS];
 	}Frame_Fields;
 	
 Frame_Fields PWM_Channel_Cofnig;
@@ -51,13 +53,17 @@ void Refresh_Channel_Settings(void)
 	{
 		uint8_t test_data[] ={95, 96, 97, 98, 99};
 		//rs232_Transmit_Byte(98);
-		rs232_Send_Data(test_data,5);
+		rs232_Send_Data(test_data,4);
 	}else
 	{
-	rs232_Send_Data(&PWM_Channel_Cofnig.function, 1);
-	rs232_Send_Data(&PWM_Channel_Cofnig.channels_to_set, 1);
-	rs232_Send_Data(PWM_Channel_Cofnig.channel_number, 1);
-	rs232_Send_Data(PWM_Channel_Cofnig.channel_value, 1);
+		rs232_Send_Data(&PWM_Channel_Cofnig.function, 1);
+		rs232_Send_Data(&PWM_Channel_Cofnig.channels_to_set, 1);
+		rs232_Send_Data(PWM_Channel_Cofnig.channel_number, PWM_Channel_Cofnig.channels_to_set);
+		rs232_Send_Data(PWM_Channel_Cofnig.channel_value, PWM_Channel_Cofnig.channels_to_set);
+		//change PWM duty
+		for(uint8_t i=0; i<PWM_Channel_Cofnig.channels_to_set; i++){
+			pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[i], PWM_Channel_Cofnig.channel_value[i] );
+		}
 	}
 	
 }

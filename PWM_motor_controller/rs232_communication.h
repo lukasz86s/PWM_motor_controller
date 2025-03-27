@@ -19,7 +19,6 @@
 void rs232_Init(uint32_t baud);
 void rs232_Transmit_Byte(uint8_t data);
 uint8_t rs232_Receive_Byte(void);
-void rs232_Set_Tx_Flag(void);
 void rs232_Send_Data(uint8_t *data, uint8_t len);
 uint8_t * rs232_Get_Frame(void);
 

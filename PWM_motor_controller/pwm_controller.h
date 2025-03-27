@@ -9,6 +9,8 @@
 #ifndef PWM_CONTROLLER_H_
 #define PWM_CONTROLLER_H_
 #include <avr/io.h>
+// TODO: extend to 2 ports PORTB &PORTD
+#define MAX_PWM_CHANNELS 6
 
 typedef enum {
 	PWM_CHANNEL_1,

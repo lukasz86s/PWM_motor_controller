@@ -36,7 +36,7 @@ void rs232_Init(uint32_t baud)
 	//set frame format 8data , 1 stop bit
 	UCSR0C |= (1<<UCSZ01) | (1<<UCSZ00);
 	//enable iterrupt from Rx  and Tx
-	UCSR0B |= (1<<RXCIE0) | (1<<TXCIE0);
+	UCSR0B |= (1<<RXCIE0);
 	
 	
 }
@@ -69,10 +69,6 @@ ISR(USART_RX_vect)
 	
 }
 
-void rs232_Set_Tx_Flag(void)
-{
-	UCSR0B |= (1<<UDRIE0);
-}
 
 uint8_t getc_from_rx_buff(void)
 {
@@ -101,7 +97,7 @@ ISR(USART_UDRE_vect)
 		TxTail = (TxTail + 1) & RS232_TX_BUF_MASK;
 		//read form buffer 
 		UDR0 = TxBuf[TxTail];
-
+		
 	}else
 	{
 		// buffer empty, disable interrupt on flag
@@ -114,10 +110,9 @@ void rs232_Send_Data(uint8_t *data, uint8_t len)
 	for(uint8_t i = 0; i < len; i++)
 	{
 		putc_into_tx_buff(data[i]);
+		//start transmmit
+		UCSR0B |= (1<<UDRIE0);
 	}
-	//start transmmit
-	rs232_Set_Tx_Flag();
-	
 }
 
 uint8_t* rs232_Get_Frame(void)

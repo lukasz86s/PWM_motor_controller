@@ -21,23 +21,18 @@ int main(void)
 	rs232_Init(9600);
 	// set output on pins
 	DDRB |= ((1 << PB2) | (1 << PB1)| (1 << PB0));
+	pwm_Set_Duty(PWM_CHANNEL_3, 20);
+	pwm_Set_Duty(PWM_CHANNEL_2, 60);
+	pwm_Set_Duty(PWM_CHANNEL_1, 80);
 
 	// enable global interrupt 
 	sei(); 
     /* Replace with your application code */
-	uint8_t test = 0;
-
-    while (1) 
+    while(1) 
     {
-		pwm_Set_Duty(PWM_CHANNEL_3, test);
-		pwm_Set_Duty(PWM_CHANNEL_2, 100 - test);
-		pwm_Set_Duty(PWM_CHANNEL_1, 50 + test/2);
-		_delay_ms(4000);
-		test += 10;
-		if(test > 100)test = 0;
+		//_delay_ms(1000);
 		Refresh_Channel_Settings();
-		
-		
+		_delay_ms(2000);
     }
 }
 
