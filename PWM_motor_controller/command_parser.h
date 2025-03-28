@@ -9,10 +9,11 @@
 #ifndef COMMAND_PARSER_H_
 #define COMMAND_PARSER_H_
 typedef enum{
-	RESERVED,
-	WRITE,
-	READ,
-	WRITE_MANY
+	RESERVED_CMD,
+	WRITE_CMD,
+	READ_CMD,
+	WRITE_MANY_CMD,
+	WRITE_SETTINGS_CMD
 	}CMD_byte_t;
 
 void Refresh_Channel_Settings(void);

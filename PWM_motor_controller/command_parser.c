@@ -4,6 +4,7 @@
  * Created: 26.03.2025 10:14:23
  *  Author: surmi
  */ 
+#include "command_parser.h"
 #include "pwm_controller.h"
 #include "rs232_communication.h"
 
@@ -45,24 +46,41 @@ uint8_t parse_frame(void)
 	return 0;
 	
 }
-
-void Refresh_Channel_Settings(void)
+/*--------------futciotn only to test.correctness of transmitted data-----------*/
+void print_pwm_stat(Frame_Fields * stats)
+{
+	rs232_Send_Data(&stats->function, 1);
+	rs232_Send_Data(&stats->channels_to_set, 1);
+	rs232_Send_Data(stats->channel_number, stats->channels_to_set);
+	rs232_Send_Data(stats->channel_value, stats->channels_to_set);
+	
+}
+/*-------------------------------------------------------------------------*/
+	void Refresh_Channel_Settings(void)
 {
 	uint8_t status = parse_frame();
 	if(status == 1)
-	{
+	{	
+		// TODO: implement 'ping' function 
 		uint8_t test_data[] ={95, 96, 97, 98, 99};
-		//rs232_Transmit_Byte(98);
 		rs232_Send_Data(test_data,4);
 	}else
 	{
-		rs232_Send_Data(&PWM_Channel_Cofnig.function, 1);
-		rs232_Send_Data(&PWM_Channel_Cofnig.channels_to_set, 1);
-		rs232_Send_Data(PWM_Channel_Cofnig.channel_number, PWM_Channel_Cofnig.channels_to_set);
-		rs232_Send_Data(PWM_Channel_Cofnig.channel_value, PWM_Channel_Cofnig.channels_to_set);
-		//change PWM duty
-		for(uint8_t i=0; i<PWM_Channel_Cofnig.channels_to_set; i++){
-			pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[i], PWM_Channel_Cofnig.channel_value[i] );
+		print_pwm_stat(&PWM_Channel_Cofnig);
+		switch(PWM_Channel_Cofnig.function){
+			case WRITE_CMD:
+				pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[0], PWM_Channel_Cofnig.channel_value[0]);
+				break;
+			case READ_CMD:
+				break;
+			case WRITE_MANY_CMD:
+				for(uint8_t i=0; i<PWM_Channel_Cofnig.channels_to_set; i++)
+					{
+						pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[i], PWM_Channel_Cofnig.channel_value[i] );
+					}
+				break;
+			case WRITE_SETTINGS_CMD:
+				break;
 		}
 	}
 	
