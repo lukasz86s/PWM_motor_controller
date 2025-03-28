@@ -12,7 +12,15 @@ volatile uint8_t enbled_pwm_chnnels = 3;
 volatile uint8_t pwm_channel_duty_list[NUMBER_OF_CHANNELS] = {[0 ... (NUMBER_OF_CHANNELS-1)] = 0} ;
 volatile uint16_t pwm_pin_list[NUMBER_OF_CHANNELS] = {PWM_PINOUT_1, PWM_PINOUT_2, PWM_PINOUT_3, PWM_PINOUT_4, PWM_PINOUT_5, PWM_PINOUT_6}; 
 
-
+/**
+ * @brief calculate crc16
+ * 
+ * @param *data -> pointer on first element of data to calculate
+ * @param length -> numbers of bytes to calculate 
+ * 
+ * @note need include <avr/io.h>
+ * @attention change TCCR2A, TCCR2B, TIMSK2, OCR2A  .
+ */
 void pwm_Init (void)
 {
 	//set CTC mode on timer2

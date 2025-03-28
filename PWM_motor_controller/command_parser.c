@@ -7,6 +7,11 @@
 #include "command_parser.h"
 #include "pwm_controller.h"
 #include "rs232_communication.h"
+#include <util/crc16.h>
+
+#ifndef NULL 
+	#define NULL 0
+#endif
 
 #ifndef MAX_PWM_CHANNELS
 	#define MAX_PWM_CHANNELS 10
@@ -27,14 +32,37 @@ typedef struct
 	}Frame_Fields;
 	
 Frame_Fields PWM_Channel_Cofnig;
+
+/**
+ * @brief calculate crc16
+ * 
+ * @param *data -> pointer on first element of data to calculate
+ * @param length -> numbers of bytes to calculate 
+ * 
+ * @note need include <util/crc16.h> to work
+ */
+uint16_t calculate_crc(const uint8_t *data, uint8_t length)
+{
+	uint16_t crc = 0xFFFF; // initializing crc val
+	for(uint8_t i = 0; i < length; i++)
+	{
+		crc = _crc16_update(crc, data[i]);
+	}
+	return crc;
+}
 	
 uint8_t parse_frame(void)
 {
+	//TODO: change to const data
 	uint8_t* data = rs232_Get_Frame();
-	if(data == 0) return 1;
+	if(data == NULL) return EMPTY_BUFFER_ERROR;
 	uint8_t len = data[FRAME_LEN];
-	len +=1;
-	// TODO: implement function check_crc(len, data)
+	uint8_t len_without_crc_bytes = len - 2;
+	// TODO: test calcuate crc -------------------
+	uint16_t crc_score = calculate_crc(data, len_without_crc_bytes);
+	uint16_t crc = (data[len_without_crc_bytes] << 8) & (0xFF & data[len_without_crc_bytes + 1]);
+	if(crc != crc_score) return CRC16_CHECK_ERROR;
+	//---------------------------------------------
 	PWM_Channel_Cofnig.function = data[CMD];
 	PWM_Channel_Cofnig.channels_to_set = data[CHANNELS_TO_SET];
 	// TODO: add channel data amount calculation (len - nr_of_channels*2 == x)
@@ -46,7 +74,15 @@ uint8_t parse_frame(void)
 	return 0;
 	
 }
-/*--------------futciotn only to test.correctness of transmitted data-----------*/
+
+/**
+ * @brief sending extracted data from received frame 
+ * 
+ * @param stats -> struct holding extracted data form frame
+ * @return void 
+ * 
+ * @note only to test.correctness of transmitted data
+ */
 void print_pwm_stat(Frame_Fields * stats)
 {
 	rs232_Send_Data(&stats->function, 1);
@@ -55,11 +91,15 @@ void print_pwm_stat(Frame_Fields * stats)
 	rs232_Send_Data(stats->channel_value, stats->channels_to_set);
 	
 }
-/*-------------------------------------------------------------------------*/
+
+/**
+ * @brief 
+ * @note 
+ */
 	void Refresh_Channel_Settings(void)
 {
 	uint8_t status = parse_frame();
-	if(status == 1)
+	if(status == EMPTY_BUFFER_ERROR)
 	{	
 		// TODO: implement 'ping' function 
 		uint8_t test_data[] ={95, 96, 97, 98, 99};
