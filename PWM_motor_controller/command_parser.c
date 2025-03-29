@@ -16,6 +16,10 @@
 #ifndef MAX_PWM_CHANNELS
 	#define MAX_PWM_CHANNELS 10
 #endif
+
+#define CRC_BYTES_LEN 2
+#define CONST_FRAME_LEN 3
+
 typedef enum{
 	FRAME_LEN,
 	CMD,
@@ -55,17 +59,21 @@ uint8_t parse_frame(void)
 {
 	//TODO: change to const data
 	uint8_t* data = rs232_Get_Frame();
-	if(data == NULL) return EMPTY_BUFFER_ERROR;
+	if(data == NULL)
+		return EMPTY_BUFFER_ERROR;
+		
 	uint8_t len = data[FRAME_LEN];
-	uint8_t len_without_crc_bytes = len - 2;
-	// TODO: test calcuate crc -------------------
-	uint16_t crc_score = calculate_crc(data, len_without_crc_bytes);
-	uint16_t crc = (data[len_without_crc_bytes] << 8) & (0xFF & data[len_without_crc_bytes + 1]);
-	if(crc != crc_score) return CRC16_CHECK_ERROR;
-	//---------------------------------------------
+	uint8_t len_without_crc = len - CRC_BYTES_LEN;
+	uint16_t crc_score = calculate_crc(data, len_without_crc);
+	uint16_t crc = (data[len_without_crc] << 8) | data[len_without_crc + 1];
+	if(crc != crc_score)
+		return CRC16_CHECK_ERROR;
+		
 	PWM_Channel_Cofnig.function = data[CMD];
 	PWM_Channel_Cofnig.channels_to_set = data[CHANNELS_TO_SET];
-	// TODO: add channel data amount calculation (len - nr_of_channels*2 == x)
+	if(len - CONST_FRAME_LEN - CRC_BYTES_LEN != data[CHANNELS_TO_SET]*2)
+		return DATA_LEN_ERROR;
+	
 	for(uint8_t channel_config_idx = 0; channel_config_idx < PWM_Channel_Cofnig.channels_to_set; channel_config_idx++)
 	{	
 		PWM_Channel_Cofnig.channel_number[channel_config_idx]  = data[FIRST_CHANNELS_DATA + 2*channel_config_idx];
@@ -104,7 +112,13 @@ void print_pwm_stat(Frame_Fields * stats)
 		// TODO: implement 'ping' function 
 		uint8_t test_data[] ={95, 96, 97, 98, 99};
 		rs232_Send_Data(test_data,4);
-	}else
+	}else if(status == CRC16_CHECK_ERROR)
+	{
+		
+	}else if(status == DATA_LEN_ERROR)
+	{
+	
+	}
 	{
 		print_pwm_stat(&PWM_Channel_Cofnig);
 		switch(PWM_Channel_Cofnig.function){

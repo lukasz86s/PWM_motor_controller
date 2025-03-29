@@ -132,10 +132,10 @@ uint8_t* rs232_Get_Frame(void)
 	uint8_t frame_length = getc_from_rx_buff();
 	//copy frame with lenght on begin
 	frame_buff[0] = frame_length;
-	for(uint8_t i = 0; i < frame_length; i++) 
+	for(uint8_t i = 1; i < frame_length; i++) 
 	{
 		//offset 1 , frame_buff[0] is occupied
-		frame_buff[i+1] = getc_from_rx_buff();
+		frame_buff[i] = getc_from_rx_buff();
 	}
     return frame_buff;
 }

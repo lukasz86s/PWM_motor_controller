@@ -21,9 +21,9 @@ int main(void)
 	rs232_Init(9600);
 	// set output on pins
 	DDRB |= ((1 << PB2) | (1 << PB1)| (1 << PB0));
-	pwm_Set_Duty(PWM_CHANNEL_3, 20);
-	pwm_Set_Duty(PWM_CHANNEL_2, 60);
-	pwm_Set_Duty(PWM_CHANNEL_1, 80);
+	pwm_Set_Duty(PWM_CHANNEL_3, 50);
+	pwm_Set_Duty(PWM_CHANNEL_2, 50);
+	pwm_Set_Duty(PWM_CHANNEL_1, 50);
 
 	// enable global interrupt 
 	sei(); 
