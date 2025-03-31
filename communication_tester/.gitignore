@@ -3,4 +3,6 @@ venv/
 __pycache__/
 *.pyc
 *.pyo
+.vs/
 
+my_test.py
