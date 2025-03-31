@@ -10,3 +10,6 @@ def calculate_crc16_MODBUS(data: bytes) -> int:
             else:
                 crc >>= 1
     return crc
+
+def create_frame(CMD: int, channels_to_set: int, channels_data: list):
+    pass
