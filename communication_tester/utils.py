@@ -1,6 +1,7 @@
 import serial
 
 def calculate_crc16_MODBUS(data: bytes) -> int:
+    """calculates the checksum crc16 MODBUS"""
     crc = 0xFFFF
     for byte in data:
         crc ^= byte
@@ -14,9 +15,15 @@ def calculate_crc16_MODBUS(data: bytes) -> int:
 FRAME_CONST_SIZE = 3
 FRAME_CRC_SIZE = 2
 def create_frame(cmd: int,  channels_data: list):
+    """creates a frame to send from the given dancyh """
     channels_data_size = len(channels_data)
-    assert channels_data_size % 2 == 0
-    channels_to_set_size = channels_data_size//2
+    assert channels_data_size > 0
+
+    channels_to_set_size = channels_data_size
+    if(channels_data_size != 1):
+        assert channels_data_size % 2 == 0
+        channels_to_set_size = channels_data_size//2
+        
     data = []
     data.append(0x55)
     frame_size = channels_data_size + FRAME_CONST_SIZE + FRAME_CRC_SIZE
@@ -29,6 +36,5 @@ def create_frame(cmd: int,  channels_data: list):
     low_byte = crc & 0xFF
     data.append(high_byte)
     data.append(low_byte) 
-    print(data)
-    print(crc)
+
     return data   

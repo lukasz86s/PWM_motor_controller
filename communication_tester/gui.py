@@ -9,6 +9,7 @@ class CommunicationGui(tk.Tk):
         super().__init__()
         self.title("MCU Communication Tester")
         self.serial_conn = None  # Variable for the serial connection
+        self.cmd_map = {"write":1, "read":2, "read many": 3}
 
         # --- Top Section ---
         top_frame = ttk.Frame(self)
@@ -39,7 +40,7 @@ class CommunicationGui(tk.Tk):
         
         # CMD selection
         ttk.Label(lower_frame, text="CMD:").grid(row=0, column=0, padx=5)
-        self.cmd_combo = ttk.Combobox(lower_frame, values=["write", "read"], state="disabled")
+        self.cmd_combo = ttk.Combobox(lower_frame, values=list(self.cmd_map.keys()), state="disabled")
         self.cmd_combo.grid(row=0, column=1, padx=5)
         self.cmd_combo.current(0)
         
@@ -147,9 +148,9 @@ class CommunicationGui(tk.Tk):
     
     def send(self):
         """Sends data by retrieving and validating user inputs from the interface."""
-        cmd = self.cmd_combo.get()
+        cmd = self.cmd_map[self.cmd_combo.get()]
         channels_data = []
-        for idx, (cb, entry) in enumerate(self.channel_widgets, start=1):
+        for _, (cb, entry) in enumerate(self.channel_widgets, start=1):
             channel_number = int(cb.get())
             try:
                 value = int(entry.get())
@@ -158,8 +159,15 @@ class CommunicationGui(tk.Tk):
             except Exception as e:
                 messagebox.showerror("Input Error", f"Channel {channel_number} error: {e}")
                 return
-            channels_data.append((channel_number, value))
-        #TODO: implement function create_frame(cmd, channels_to_set, channes_data), send data via serial
+            channels_data.append(channel_number)
+            channels_data.append(value)
+
+        frame_to_send = create_frame(cmd, channels_data)
+        try:
+            self.serial_conn.write(frame_to_send)
+        except Exception as e:
+            messagebox.showerror("Sending Error", f"error msg:{e}")
+        
         
 
 if __name__ == "__main__":
