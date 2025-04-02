@@ -88,7 +88,7 @@ class CommunicationGui(tk.Tk):
         com_port = self.com_combo.get()
         baud = self.baud_combo.get()
         try:
-            self.serial_conn = serial.Serial(com_port, int(baud))
+            self.serial_conn = serial.Serial(com_port, int(baud), timeout=0.1)
             self.set_lower_state("normal")
             self.connect_button.configure(text="Disconnect")
         except Exception as e:
@@ -163,10 +163,18 @@ class CommunicationGui(tk.Tk):
             channels_data.append(value)
 
         frame_to_send = create_frame(cmd, channels_data)
+        #clear input buffer
+        self.serial_conn.reset_input_buffer()
         try:
-            self.serial_conn.write(frame_to_send)
-        except Exception as e:
-            messagebox.showerror("Sending Error", f"error msg:{e}")
+            n = self.serial_conn.write(frame_to_send)
+        except serial.SerialTimeoutException as e:
+            messagebox.showerror("Sending Error", f"Timeout error")
+        response = self.serial_conn.read_until('U', 25)
+        print(n)
+        if response:
+            print(f"response: {response}")
+        else:
+            print("NO response")
         
         
 
