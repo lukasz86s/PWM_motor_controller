@@ -13,7 +13,8 @@ typedef enum{
 	WRITE_CMD,
 	READ_CMD,
 	WRITE_MANY_CMD,
-	WRITE_SETTINGS_CMD
+	WRITE_SETTINGS_CMD,
+	PING_CMD 
 	}CMD_byte_t;
 
 typedef enum{

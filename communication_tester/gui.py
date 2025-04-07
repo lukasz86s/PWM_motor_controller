@@ -10,6 +10,7 @@ class CommunicationGui(tk.Tk):
         self.title("MCU Communication Tester")
         self.serial_conn = None  # Variable for the serial connection
         self.cmd_map = {"write":1, "read":2, "read many": 3}
+        self.sheduled_connection_status_id = None
 
         # --- Top Section ---
         top_frame = ttk.Frame(self)
@@ -91,6 +92,7 @@ class CommunicationGui(tk.Tk):
             self.serial_conn = serial.Serial(com_port, int(baud), timeout=0.1)
             self.set_lower_state("normal")
             self.connect_button.configure(text="Disconnect")
+            self.shedule_connection_status()
         except Exception as e:
             messagebox.showerror("Connection Error", str(e))
     
@@ -166,17 +168,34 @@ class CommunicationGui(tk.Tk):
         #clear input buffer
         self.serial_conn.reset_input_buffer()
         try:
-            n = self.serial_conn.write(frame_to_send)
+            self.serial_conn.write(frame_to_send)
         except serial.SerialTimeoutException as e:
             messagebox.showerror("Sending Error", f"Timeout error")
-        response = self.serial_conn.read_until('U', 25)
-        print(n)
+        response = self.serial_conn.read_until('U', 4)
         if response:
             print(f"response: {response}")
         else:
             print("NO response")
+    
+    def shedule_connection_status(self):
+        #check connection with serial port
+        if self.serial_conn is not None:
+            #check connection status
+            self.connection_status()
+            self.sheduled_connection_status_id = self.after(100, self.shedule_connection_status)
+
+    def connection_status(self):
+        PING_CMD = 5
+        frame_to_send = create_frame(PING_CMD, [])
+        try:
+            n = self.serial_conn.write(frame_to_send)
+        except serial.SerialTimeoutException as e:
+            messagebox.showerror("Sending Error", f"Timeout error")
+        response = self.serial_conn.read_until('U', 4)
+        print(response)
         
         
+   
 
 if __name__ == "__main__":
     app = CommunicationGui()

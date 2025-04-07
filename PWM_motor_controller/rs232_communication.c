@@ -105,7 +105,7 @@ ISR(USART_UDRE_vect)
 	}
 }
 
-void rs232_Send_Data(uint8_t *data, uint8_t len)
+void rs232_Send_Data(const uint8_t *data, uint8_t len)
 {
 	for(uint8_t i = 0; i < len; i++)
 	{

@@ -20,6 +20,17 @@
 #define CRC_BYTES_LEN 2
 #define CONST_FRAME_LEN 3
 
+#define PING 0
+#define RESPONSE_STATUS_LEN 5
+// TODO: create function crate status frame 
+const uint8_t empty_buffer_error_frame[] = {0x55, 0x4, EMPTY_BUFFER_ERROR, 0xD0, 0xA2 };
+const uint8_t crc16_check_error_frame[] = {0x55, 0x4,CRC16_CHECK_ERROR, 0xD1, 0xE2};
+const uint8_t data_len_error_frame[] = {0x55, 0x4,DATA_LEN_ERROR, 0x11, 0x23 };
+const uint8_t ping_frame[] = {0x55, 0x4,PING_CMD, 0x13, 0xA3};
+
+
+
+
 typedef enum{
 	FRAME_LEN,
 	CMD,
@@ -70,6 +81,7 @@ uint8_t parse_frame(void)
 		return CRC16_CHECK_ERROR;
 		
 	PWM_Channel_Cofnig.function = data[CMD];
+	if(PWM_Channel_Cofnig.function == PING_CMD) return NO_ERROR ; // no need to copy empty config 
 	PWM_Channel_Cofnig.channels_to_set = data[CHANNELS_TO_SET];
 	if(len - CONST_FRAME_LEN - CRC_BYTES_LEN != data[CHANNELS_TO_SET]*2)
 		return DATA_LEN_ERROR;
@@ -79,7 +91,7 @@ uint8_t parse_frame(void)
 		PWM_Channel_Cofnig.channel_number[channel_config_idx]  = data[FIRST_CHANNELS_DATA + 2*channel_config_idx];
 		PWM_Channel_Cofnig.channel_value[channel_config_idx ] = data[FIRST_CHANNELS_DATA + 2*channel_config_idx +1];
 	}
-	return 0;
+	return NO_ERROR;
 	
 }
 
@@ -110,31 +122,39 @@ void print_pwm_stat(Frame_Fields * stats)
 	if(status == EMPTY_BUFFER_ERROR)
 	{	
 		// TODO: implement 'ping' function 
-		uint8_t test_data[] ={95, 96, 97, 98, 99};
-		rs232_Send_Data(test_data,4);
-	}else if(status == CRC16_CHECK_ERROR)
-	{
-		
-	}else if(status == DATA_LEN_ERROR)
-	{
-	
+		rs232_Send_Data(empty_buffer_error_frame, RESPONSE_STATUS_LEN );
+		return;
 	}
+	if(status == CRC16_CHECK_ERROR)
 	{
-		print_pwm_stat(&PWM_Channel_Cofnig);
-		switch(PWM_Channel_Cofnig.function){
-			case WRITE_CMD:
-				pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[0], PWM_Channel_Cofnig.channel_value[0]);
-				break;
-			case READ_CMD:
-				break;
-			case WRITE_MANY_CMD:
-				for(uint8_t i=0; i<PWM_Channel_Cofnig.channels_to_set; i++)
-					{
-						pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[i], PWM_Channel_Cofnig.channel_value[i] );
-					}
-				break;
-			case WRITE_SETTINGS_CMD:
-				break;
+		rs232_Send_Data(crc16_check_error_frame, RESPONSE_STATUS_LEN );
+		return;
+		
+	}
+	if(status == DATA_LEN_ERROR)
+	{
+		rs232_Send_Data(data_len_error_frame, RESPONSE_STATUS_LEN );
+		return;
+	}
+	print_pwm_stat(&PWM_Channel_Cofnig);
+	switch(PWM_Channel_Cofnig.function){
+		case WRITE_CMD:
+			pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[0], PWM_Channel_Cofnig.channel_value[0]);
+			break;
+		case READ_CMD:
+			break;
+		case WRITE_MANY_CMD:
+			for(uint8_t i=0; i<PWM_Channel_Cofnig.channels_to_set; i++)
+				{
+					pwm_Set_Duty(PWM_Channel_Cofnig.channel_number[i], PWM_Channel_Cofnig.channel_value[i] );
+				}
+			break;
+		case WRITE_SETTINGS_CMD:
+			break;
+		case PING_CMD
+		{	
+			rs232_Send_Data(ping_frame, RESPONSE_STATUS_LEN );
+			break;
 		}
 	}
 	

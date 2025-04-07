@@ -30,9 +30,10 @@ int main(void)
     /* Replace with your application code */
     while(1) 
     {
-		//_delay_ms(1000);
+		_delay_ms(100);
 		Refresh_Channel_Settings();
-		_delay_ms(2000);
+		
+
     }
 }
 
