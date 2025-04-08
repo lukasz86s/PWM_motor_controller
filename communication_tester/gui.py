@@ -167,10 +167,13 @@ class CommunicationGui(tk.Tk):
         frame_to_send = create_frame(cmd, channels_data)
         #clear input buffer
         self.serial_conn.reset_input_buffer()
+        self.serial_conn.reset_output_buffer()
+        print(frame_to_send)
         try:
             self.serial_conn.write(frame_to_send)
         except serial.SerialTimeoutException as e:
             messagebox.showerror("Sending Error", f"Timeout error")
+        
         response = self.serial_conn.read_until('U', 4)
         if response:
             print(f"response: {response}")
@@ -182,16 +185,17 @@ class CommunicationGui(tk.Tk):
         if self.serial_conn is not None:
             #check connection status
             self.connection_status()
-            self.sheduled_connection_status_id = self.after(100, self.shedule_connection_status)
+            self.sheduled_connection_status_id = self.after(300, self.shedule_connection_status)
 
     def connection_status(self):
         PING_CMD = 5
         frame_to_send = create_frame(PING_CMD, [])
+        print(frame_to_send)
         try:
             n = self.serial_conn.write(frame_to_send)
         except serial.SerialTimeoutException as e:
             messagebox.showerror("Sending Error", f"Timeout error")
-        response = self.serial_conn.read_until('U', 4)
+        response = self.serial_conn.read_until('U', 5)
         print(response)
         
         

@@ -74,7 +74,10 @@ uint8_t getc_from_rx_buff(void)
 {
 	if( RxHead == RxTail) return 0;
 	RxTail = (RxTail + 1) & RS232_RX_BUF_MASK;
-	return RxBuf[RxTail];
+	uint8_t TempRxBuff = RxBuf[RxTail];
+	//clear readed val
+	RxBuf[RxTail] = 0;
+	return TempRxBuff;
 }
 
 void putc_into_tx_buff(uint8_t data)
@@ -123,7 +126,7 @@ uint8_t* rs232_Get_Frame(void)
 	new_data_flag = 0;
 	//buffer length counter
 	uint8_t invalid_data_cnt = RS232_RX_BUF_SIZE;
-	// wait for the start of a frame no longer than the buffer length
+	// wait for the start of a frame, no longer than the buffer length
 	while(getc_from_rx_buff() != 0x55  )
 	{
 		if(invalid_data_cnt--)return 0;

@@ -25,7 +25,7 @@ def crc16_split_into_two_bytes(crc: int):
 def create_frame(cmd: int,  channels_data: list):
     """creates a frame to send from the given dancyh """
     if cmd == PING_CMD:
-        data = [0x55, 0x1, PING_CMD]
+        data = [0x55, 0x04, PING_CMD]
         crc = calculate_crc16_MODBUS(bytes(data[1:]))
         high_byte, low_byte = crc16_split_into_two_bytes(crc)
         data.append(high_byte)
