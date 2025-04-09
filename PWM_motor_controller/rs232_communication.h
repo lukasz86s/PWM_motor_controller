@@ -10,9 +10,9 @@
 #define RS232_COMMUNICATION_H_
 #include <avr/io.h>
 
-#define RS232_RX_BUF_SIZE 32
+#define RS232_RX_BUF_SIZE 128
 #define RS232_RX_BUF_MASK (RS232_RX_BUF_SIZE - 1)
-#define RS232_TX_BUF_SIZE 16
+#define RS232_TX_BUF_SIZE 32
 #define RS232_TX_BUF_MASK (RS232_TX_BUF_SIZE - 1)
 
 // TODO: Describe functions 

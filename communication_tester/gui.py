@@ -147,7 +147,7 @@ class CommunicationGui(tk.Tk):
             entry.grid(row=i+1, column=1, padx=5, pady=2)
             entry.insert(0, "0")
             self.channel_widgets.append((cb, entry))
-    
+    # TODO: add sendign buff with sending sheduler 
     def send(self):
         """Sends data by retrieving and validating user inputs from the interface."""
         cmd = self.cmd_map[self.cmd_combo.get()]

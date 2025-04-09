@@ -9,6 +9,7 @@
 #include <avr/interrupt.h>
 
 #define F_CPU 16000000UL
+#define MIN_RECEIVED_DATA_CNT 4
 
 volatile uint8_t RxBuf[RS232_RX_BUF_SIZE];
 volatile uint8_t RxHead;
@@ -52,7 +53,8 @@ uint8_t rs232_Receive_Byte(void)
 }
 
 ISR(USART_RX_vect)
-{
+{	
+	static uint8_t data_cnt = MIN_RECEIVED_DATA_CNT;
 	uint8_t temp_head;
 	uint8_t data;
 	data = UDR0;
@@ -64,7 +66,11 @@ ISR(USART_RX_vect)
 	{
 		RxHead = temp_head;
 		RxBuf[RxHead] = data;
-		if(!new_data_flag) new_data_flag = 1; 
+		if(!data_cnt--)
+		{
+			 new_data_flag = 1; 
+			 data_cnt = MIN_RECEIVED_DATA_CNT;
+		}
 	}
 	
 }
