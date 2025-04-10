@@ -54,7 +54,6 @@ uint8_t rs232_Receive_Byte(void)
 
 ISR(USART_RX_vect)
 {	
-	static uint8_t data_cnt = MIN_RECEIVED_DATA_CNT;
 	uint8_t temp_head;
 	uint8_t data;
 	data = UDR0;
@@ -66,11 +65,6 @@ ISR(USART_RX_vect)
 	{
 		RxHead = temp_head;
 		RxBuf[RxHead] = data;
-		if(!data_cnt--)
-		{
-			 new_data_flag = 1; 
-			 data_cnt = MIN_RECEIVED_DATA_CNT;
-		}
 	}
 	
 }
@@ -123,13 +117,23 @@ void rs232_Send_Data(const uint8_t *data, uint8_t len)
 		UCSR0B |= (1<<UDRIE0);
 	}
 }
-
+uint8_t get_rx_buff_data_size(void)
+{
+	if(RxHead == RxTail) return 0;
+	uint8_t calculate_new_data_size = 0;
+	uint8_t tail = RxTail;
+	uint8_t head = RxHead;
+	if (tail < head)
+		calculate_new_data_size = head - tail;
+	else
+		calculate_new_data_size = (RS232_RX_BUF_SIZE - tail) + head;
+	return calculate_new_data_size;
+}
 uint8_t* rs232_Get_Frame(void)
 {	
-	// if there is no new data return 
-	if( !new_data_flag)
+	//check if buff has minimum size of frame
+	if( get_rx_buff_data_size() < 5)
 		return 0;
-	new_data_flag = 0;
 	//buffer length counter
 	uint8_t invalid_data_cnt = RS232_RX_BUF_SIZE;
 	// wait for the start of a frame, no longer than the buffer length

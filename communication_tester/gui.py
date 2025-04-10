@@ -89,7 +89,7 @@ class CommunicationGui(tk.Tk):
         com_port = self.com_combo.get()
         baud = self.baud_combo.get()
         try:
-            self.serial_conn = serial.Serial(com_port, int(baud), timeout=0.1)
+            self.serial_conn = serial.Serial(com_port, int(baud), timeout=0.1, write_timeout=0)
             self.set_lower_state("normal")
             self.connect_button.configure(text="Disconnect")
             self.shedule_connection_status()
@@ -171,6 +171,7 @@ class CommunicationGui(tk.Tk):
         print(frame_to_send)
         try:
             self.serial_conn.write(frame_to_send)
+            self.serial_conn.flush()
         except serial.SerialTimeoutException as e:
             messagebox.showerror("Sending Error", f"Timeout error")
         
@@ -185,7 +186,7 @@ class CommunicationGui(tk.Tk):
         if self.serial_conn is not None:
             #check connection status
             self.connection_status()
-            self.sheduled_connection_status_id = self.after(300, self.shedule_connection_status)
+            self.sheduled_connection_status_id = self.after(500, self.shedule_connection_status)
 
     def connection_status(self):
         PING_CMD = 5
