@@ -137,7 +137,6 @@ class CommunicationGui(tk.Tk):
         
         # Create widgets for each channel (starting from row 1)
         for i in range(count):
-            #TODO: Change to maximum channels that can be obtainded on atmega
             # Combobox for channel number (1-10)
             cb = ttk.Combobox(self.channels_frame, values=[str(j) for j in range(1, 11)], width=3)
             cb.grid(row=i+1, column=0, padx=5, pady=2)
@@ -148,6 +147,7 @@ class CommunicationGui(tk.Tk):
             entry.insert(0, "0")
             self.channel_widgets.append((cb, entry))
     # TODO: add sendign buff with sending sheduler 
+    
     def send(self):
         """Sends data by retrieving and validating user inputs from the interface."""
         cmd = self.cmd_map[self.cmd_combo.get()]

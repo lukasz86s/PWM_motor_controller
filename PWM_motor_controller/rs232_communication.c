@@ -145,6 +145,11 @@ uint8_t* rs232_Get_Frame(void)
 	uint8_t frame_length = getc_from_rx_buff();
 	//copy frame with lenght on begin
 	frame_buff[0] = frame_length;
+	uint8_t expected_data_size = frame_length - 1;
+	uint8_t data_size_in_buff = get_rx_buff_data_size();
+	// wait for the rest of the frame TODO: add timeotu to prevent lock
+	while(data_size_in_buff < expected_data_size)
+		data_size_in_buff = get_rx_buff_data_size();
 	for(uint8_t i = 1; i < frame_length; i++) 
 	{
 		//offset 1 , frame_buff[0] is occupied
