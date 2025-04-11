@@ -7,21 +7,19 @@
 #include "rs232_communication.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 
 #define F_CPU 16000000UL
 #define MIN_RECEIVED_DATA_CNT 4
 
-volatile uint8_t RxBuf[RS232_RX_BUF_SIZE];
-volatile uint8_t RxHead;
-volatile uint8_t RxTail;
+static volatile uint8_t RxBuf[RS232_RX_BUF_SIZE];
+static volatile uint8_t RxHead;
+static volatile uint8_t RxTail;
 uint8_t frame_buff[RS232_RX_BUF_SIZE/2];
 
-volatile uint8_t TxBuf[RS232_TX_BUF_SIZE];
-volatile uint8_t TxHead;
-volatile uint8_t TxTail;
-
-
-volatile uint8_t new_data_flag ; 
+static volatile uint8_t TxBuf[RS232_TX_BUF_SIZE];
+static volatile uint8_t TxHead;
+static volatile uint8_t TxTail;
 
 uint8_t getc_from_rx_buff(void);
 void putc_into_tx_buff(uint8_t data);
@@ -75,7 +73,7 @@ uint8_t getc_from_rx_buff(void)
 	if( RxHead == RxTail) return 0;
 	RxTail = (RxTail + 1) & RS232_RX_BUF_MASK;
 	uint8_t TempRxBuff = RxBuf[RxTail];
-	//clear readed val
+	//clear read val TODO: consider whether it makes sense to clean the data 
 	RxBuf[RxTail] = 0;
 	return TempRxBuff;
 }
@@ -117,18 +115,25 @@ void rs232_Send_Data(const uint8_t *data, uint8_t len)
 		UCSR0B |= (1<<UDRIE0);
 	}
 }
+
 uint8_t get_rx_buff_data_size(void)
 {
 	if(RxHead == RxTail) return 0;
 	uint8_t calculate_new_data_size = 0;
-	uint8_t tail = RxTail;
-	uint8_t head = RxHead;
+	uint8_t tail ;
+	uint8_t head ;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+	{
+			tail = RxTail;
+			head = RxHead;
+	}
 	if (tail < head)
 		calculate_new_data_size = head - tail;
 	else
 		calculate_new_data_size = (RS232_RX_BUF_SIZE - tail) + head;
 	return calculate_new_data_size;
 }
+
 uint8_t* rs232_Get_Frame(void)
 {	
 	//check if buff has minimum size of frame
@@ -147,7 +152,7 @@ uint8_t* rs232_Get_Frame(void)
 	frame_buff[0] = frame_length;
 	uint8_t expected_data_size = frame_length - 1;
 	uint8_t data_size_in_buff = get_rx_buff_data_size();
-	// wait for the rest of the frame TODO: add timeotu to prevent lock
+	// wait for the rest of the frame TODO: add timeotu to prevent lock(callback read_miliseconds) 
 	while(data_size_in_buff < expected_data_size)
 		data_size_in_buff = get_rx_buff_data_size();
 	for(uint8_t i = 1; i < frame_length; i++) 

@@ -33,6 +33,7 @@ typedef enum {
 
 void pwm_Init(void);
 void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value);
+uint32_t timer_get_time_ms(void);
 
 
 
