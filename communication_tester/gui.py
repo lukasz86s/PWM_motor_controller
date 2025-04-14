@@ -9,7 +9,7 @@ class CommunicationGui(tk.Tk):
         super().__init__()
         self.title("MCU Communication Tester")
         self.serial_conn = None  # Variable for the serial connection
-        self.cmd_map = {"write":1, "read":2, "read many": 3}
+        self.cmd_map = {"write":1, "read":2, "write many": 3}
         self.sheduled_connection_status_id = None
 
         # --- Top Section ---

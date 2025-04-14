@@ -11,6 +11,7 @@
 
 #define F_CPU 16000000UL
 #define MIN_RECEIVED_DATA_CNT 4
+#define RECIVED_TIMEOUT 40
 
 static volatile uint8_t RxBuf[RS232_RX_BUF_SIZE];
 static volatile uint8_t RxHead;
@@ -24,7 +25,9 @@ static volatile uint8_t TxTail;
 uint8_t getc_from_rx_buff(void);
 void putc_into_tx_buff(uint8_t data);
 
-void rs232_Init(uint32_t baud)
+static uint32_t (*time_1ms_callback)(void) = (void*)0;
+
+void rs232_Init(uint32_t baud, uint32_t (*time_1ms_base)(void))
 {	
 	uint16_t _ubrr = F_CPU / 16 / (baud-1);
 	
@@ -36,6 +39,7 @@ void rs232_Init(uint32_t baud)
 	UCSR0C |= (1<<UCSZ01) | (1<<UCSZ00);
 	//enable iterrupt from Rx  and Tx
 	UCSR0B |= (1<<RXCIE0);
+	time_1ms_callback = time_1ms_base;
 	
 	
 }
@@ -133,7 +137,7 @@ uint8_t get_rx_buff_data_size(void)
 		calculate_new_data_size = (RS232_RX_BUF_SIZE - tail) + head;
 	return calculate_new_data_size;
 }
-
+// TODO: add enum errors , add timeout error 
 uint8_t* rs232_Get_Frame(void)
 {	
 	//check if buff has minimum size of frame
@@ -152,9 +156,16 @@ uint8_t* rs232_Get_Frame(void)
 	frame_buff[0] = frame_length;
 	uint8_t expected_data_size = frame_length - 1;
 	uint8_t data_size_in_buff = get_rx_buff_data_size();
-	// wait for the rest of the frame TODO: add timeotu to prevent lock(callback read_miliseconds) 
+	// wait for the rest of the frame TODO: add timeotu to prevent lock(callback read_miliseconds)
+	uint32_t time_start = time_1ms_callback(); 
 	while(data_size_in_buff < expected_data_size)
 		data_size_in_buff = get_rx_buff_data_size();
+		if(time_1ms_callback() - time_start > RECIVED_TIMEOUT)
+		{
+			//clean buffer
+			for(uint8_t i = 0; i < data_size_in_buff; i++) getc_from_rx_buff();
+			return 0;
+		}
 	for(uint8_t i = 1; i < frame_length; i++) 
 	{
 		//offset 1 , frame_buff[0] is occupied

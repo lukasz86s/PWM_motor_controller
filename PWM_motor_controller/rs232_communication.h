@@ -10,13 +10,13 @@
 #define RS232_COMMUNICATION_H_
 #include <avr/io.h>
 
-#define RS232_RX_BUF_SIZE 128
+#define RS232_RX_BUF_SIZE 32
 #define RS232_RX_BUF_MASK (RS232_RX_BUF_SIZE - 1)
 #define RS232_TX_BUF_SIZE 32
 #define RS232_TX_BUF_MASK (RS232_TX_BUF_SIZE - 1)
 
 // TODO: Describe functions 
-void rs232_Init(uint32_t baud);
+void rs232_Init(uint32_t baud,  uint32_t (*time_1ms_base)(void));
 void rs232_Transmit_Byte(uint8_t data);
 uint8_t rs232_Receive_Byte(void);
 void rs232_Send_Data(const uint8_t *data, uint8_t len);

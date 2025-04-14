@@ -21,7 +21,8 @@ typedef enum{
 	NO_ERROR = 0,
 	EMPTY_BUFFER_ERROR,
 	CRC16_CHECK_ERROR,
-	DATA_LEN_ERROR
+	DATA_LEN_ERROR,
+	TIMEOUT_ERROR
 }Parser_error_t;
 
 void Refresh_Channel_Settings(void);

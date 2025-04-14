@@ -18,7 +18,7 @@
 int main(void)
 {	
 	pwm_Init();
-	rs232_Init(9600);
+	rs232_Init(9600, timer_get_time_ms);
 	// set output on pins
 	DDRB |= ((1 << PB2) | (1 << PB1)| (1 << PB0));
 	pwm_Set_Duty(PWM_CHANNEL_3, 50);

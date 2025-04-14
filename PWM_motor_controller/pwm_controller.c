@@ -26,13 +26,13 @@ static volatile uint16_t pwm_pin_list[NUMBER_OF_CHANNELS] = {PWM_PINOUT_1, PWM_P
  */
 void pwm_Init (void)
 {
-	//set CTC mode on timer2
-	TCCR2A |= (1 << WGM21);		// CTC mode
-	TCCR2B |= (1 << CS21);		// preskaler 8
-	// set OCR2A to 199 (16Mzh / 8 / 200 = 0.1ms period)
-	OCR2A = 199;
+	//set CTC mode on timer0
+	TCCR0A |= (1 << WGM01);		// CTC mode
+	TCCR0B |= (1 << CS01);		// preskaler 8
+	// set OCR0A to 99 (16Mzh / 8 / 100 = 0.05ms )
+	OCR0A = 99;
 	// compare intterupt enable
-	TIMSK2 |= (1 << OCIE2A);
+	TIMSK0 |= (1 << OCIE0A);
 	
 }
 
@@ -62,7 +62,7 @@ void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value)
 	}
 }
 
-ISR(TIMER2_COMPA_vect){
+ISR(TIMER0_COMPA_vect){
 	static uint8_t cnt ;
 	static uint8_t time_sub_tick;
 	for(uint8_t i = 0; i < enbled_pwm_chnnels; i++)
@@ -70,7 +70,7 @@ ISR(TIMER2_COMPA_vect){
 		if(pwm_channel_duty_list[i] > cnt) PORTB |= (1 << i); else PORTB &= ~(1 << i);
 	}
 	if (++cnt >= 100) cnt = 0;
-	if(++time_sub_tick >= 10)
+	if(++time_sub_tick >= 20)
 	{
 		time_sub_tick = 0;
 		system_time_ms++;
