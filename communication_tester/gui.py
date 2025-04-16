@@ -137,8 +137,8 @@ class CommunicationGui(tk.Tk):
         
         # Create widgets for each channel (starting from row 1)
         for i in range(count):
-            # Combobox for channel number (1-10)
-            cb = ttk.Combobox(self.channels_frame, values=[str(j) for j in range(1, 11)], width=3)
+            # Combobox for channel number (0-9)
+            cb = ttk.Combobox(self.channels_frame, values=[str(j) for j in range(0, 10)], width=3)
             cb.grid(row=i+1, column=0, padx=5, pady=2)
             cb.current(i if i < 10 else 0)  # default selection
             # Entry for value (0-100)
