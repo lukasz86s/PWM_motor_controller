@@ -13,13 +13,30 @@
 #define MAX_HARDWARE_PWM_CHANNELS 4
 #define MAX_SOFT_PWM_CHANNELS MAX_PWM_CHANNELS - MAX_HARDWARE_PWM_CHANNELS	// 4 hardware pwm
 #define ICR1_PWM_TOP 1599
+#define TIM1_PROCENT_TO_PWM(p) (uint16_t)((p * 1599UL) / 100)
+#define TIM2_PROCENT_TO_PWM(p) (uint8_t)((p * 255U) / 100)
 
 static volatile uint32_t system_time_ms = 0;
+static PWM_Output_Mode_t current_pwm_mode = PWM_OUTPUT_MODE_0;
 
 static volatile uint8_t enbled_soft_pwm_chnnels = 0;
 static volatile uint8_t pwm_channel_duty_list[NUMBER_OF_CHANNELS] = {[0 ... (NUMBER_OF_CHANNELS-1)] = 0} ;
 static volatile uint16_t pwm_pin_list[NUMBER_OF_CHANNELS] = {PWM_PINOUT_1, PWM_PINOUT_2, PWM_PINOUT_3, PWM_PINOUT_4, PWM_PINOUT_5, PWM_PINOUT_6}; 
-void pwm_Timer1_enable(void);
+
+// funcitions
+void pwm_Timer1_Init(void);
+// enabling hardware channels
+void pwm_enable_OC1A(void);
+void pwm_enable_OC1B(void);
+void pwm_enable_OC2A(void);
+void pwm_enable_OC2B(void);
+// disabling hardware channels
+void pwm_disable_OC1A(void);
+void pwm_disable_OC1B(void);
+void pwm_disable_OC2A(void);
+void pwm_disable_OC2B(void);
+
+
 /**
  * @brief calculate crc16
  * 
@@ -40,15 +57,30 @@ void pwm_Init (void)
 	// compare interrupt enable
 	TIMSK0 |= (1 << OCIE0A);
 	// default 2 channels pwm PB1, PB2
-	pwm_Timer1_enable();
+	pwm_Timer1_Init();
+	pwm_enable_OC1A();
+	pwm_enable_OC1B();
+
 	
 }
-void pwm_Timer1_enable(void)
+
+void pwm_Change_Output_Mode(PWM_Output_Mode_t mode)
 {
-    DDRB |= (1 << PB1) | (1 << PB2); // OC1A -> PB1, OC1B -> PB2
+	if(mode > current_pwm_mode)
+	{
+		// enable diff channels
+	}else if(mode < current_pwm_mode)
+	{
+		// disable diff chnnels 
+	}
+	
+}
+
+void pwm_Timer1_Init(void)
+{
 	// TODO: change to set on ocr
     // Fast PWM (mode 14: TOP = ICR1)
-    TCCR1A = (1 << COM1A1) | (1 << COM1B1) | (1 << WGM11);
+    TCCR1A = (1 << WGM11);
     TCCR1B = (1 << WGM13) | (1 << WGM12) | (1 << CS10);
 
     // TOP  1599 ( 16MHz / 1,6k = 10KHz)
@@ -58,12 +90,10 @@ void pwm_Timer1_enable(void)
     OCR1A = 0;
     OCR1B = 0;
 }
-void pwm_Timer2_enable(void)
+void pwm_Timer2_Init(void)
 {
-	DDRB |= (1 << PB3) | (1 << PD3);  // OC2A -> PB3 , OC2B -> PD3
     // Fast PWM (mode 3: TOP = 0xFF)
-    TCCR2A = (1 << WGM20) | (1 << WGM21) |
-			 (1 << COM2A1) | (1 << COM2B1);
+    TCCR2A = (1 << WGM20) | (1 << WGM21);
 	// prescaller = 8 (16MHz / 8/ 256 = 7,8125KHz period)
 	TCCR2B = (1 << CS21);
 	//set duty to 0 
@@ -71,6 +101,51 @@ void pwm_Timer2_enable(void)
 	OCR2B = 0;
 	
 }
+
+void pwm_enable_OC1A(void)
+{
+	DDRB |= (1 << PB1);       
+	TCCR1A |= (1 << COM1A1);   
+}
+
+void pwm_disable_OC1A(void)
+{
+	TCCR1A &= ~(1 << COM1A1);
+}
+
+void pwm_enable_OC1B(void)
+{
+	DDRB |= (1 << PB2);       
+	TCCR1A |= (1 << COM1B1);   
+}
+
+void pwm_disable_OC1B()
+{
+	TCCR1A &= ~(1 << COM1B1); 
+
+}
+void pwm_enable_OC2A(void)
+{
+	DDRB |= (1 << PB3);       
+	TCCR2A |= (1 << COM2A1);   
+}
+
+void pwm_disable_OC2A(void)
+{
+	TCCR2A &= ~(1 << COM2A1) ; 
+}
+
+void pwm_enable_OC2B(void) 
+{
+	DDRD |= (1 << PD3);       //TODO: change Pxx to DDxx or PINxx np. PB3 to DDB3 OR PINB3
+	TCCR2A |= (1 << COM2B1);   
+}
+
+void pwm_disable_OC2B(void)
+{
+	TCCR2A &= ~(1 << COM2B1); 
+}
+
 /**
  * @brief set numbers of soft PWM
  * 
@@ -108,10 +183,11 @@ uint32_t timer_get_time_ms(void)
 
 void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value)
 {
-	if (channel == 0) OCR1A = value;
-	else if (channel == 1) OCR1B = value;
-	else if (channel == 2) OCR2A = value;
-	else if (channel == 3) OCR2B = value;
+	if(value > 100)value = 100;
+	if (channel == 0) OCR1A = TIM1_PROCENT_TO_PWM(value);
+	else if (channel == 1) OCR1B = TIM1_PROCENT_TO_PWM(value);
+	else if (channel == 2) OCR2A = TIM2_PROCENT_TO_PWM(value);
+	else if (channel == 3) OCR2B = TIM2_PROCENT_TO_PWM(value);
 	else
 	{
 		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)

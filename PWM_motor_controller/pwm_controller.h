@@ -29,6 +29,16 @@ typedef enum {
 	PWM_PINOUT_6 = (1<<5)
 } PWM_Pins_t;
 
+typedef enum{
+	PWM_OUTPUT_MODE_0,
+	PWM_OUTPUT_MODE_1,
+	PWM_OUTPUT_MODE_2,
+	PWM_OUTPUT_MODE_3,
+	PWM_OUTPUT_MODE_4, 
+	PWM_OUTPUT_MODE_5, 
+	PWM_OUTPUT_MODE_6
+	}PWM_Output_Mode_t;
+
 void pwm_Init(void);
 void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value);
 uint32_t timer_get_time_ms(void);
