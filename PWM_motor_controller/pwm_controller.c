@@ -16,26 +16,33 @@
 #define TIM1_PROCENT_TO_PWM(p) (uint16_t)((p * 1599UL) / 100)
 #define TIM2_PROCENT_TO_PWM(p) (uint8_t)((p * 255U) / 100)
 
+typedef void (*change_state_func)(void);
+
 static volatile uint32_t system_time_ms = 0;
 static PWM_Output_Mode_t current_pwm_mode = PWM_OUTPUT_MODE_0;
 
-static volatile uint8_t enbled_soft_pwm_chnnels = 0;
+static volatile uint8_t enabled_soft_pwm_chnnels = 0;
 static volatile uint8_t pwm_channel_duty_list[NUMBER_OF_CHANNELS] = {[0 ... (NUMBER_OF_CHANNELS-1)] = 0} ;
 static volatile uint16_t pwm_pin_list[NUMBER_OF_CHANNELS] = {PWM_PINOUT_1, PWM_PINOUT_2, PWM_PINOUT_3, PWM_PINOUT_4, PWM_PINOUT_5, PWM_PINOUT_6}; 
 
 // funcitions
 void pwm_Timer1_Init(void);
+void pwm_Change_Output_Mode(PWM_Output_Mode_t mode);
 // enabling hardware channels
 void pwm_enable_OC1A(void);
 void pwm_enable_OC1B(void);
 void pwm_enable_OC2A(void);
 void pwm_enable_OC2B(void);
+
+change_state_func enable_hardware_timers_tab[] = { pwm_enable_OC1A, pwm_enable_OC1B, pwm_enable_OC2A, pwm_enable_OC2B };
+
 // disabling hardware channels
 void pwm_disable_OC1A(void);
 void pwm_disable_OC1B(void);
 void pwm_disable_OC2A(void);
 void pwm_disable_OC2B(void);
 
+change_state_func disable_hardware_timers_tab[] = { pwm_disable_OC1A, pwm_disable_OC1B, pwm_disable_OC2A, pwm_disable_OC2B };
 
 /**
  * @brief calculate crc16
@@ -59,20 +66,41 @@ void pwm_Init (void)
 	// default 2 channels pwm PB1, PB2
 	pwm_Timer1_Init();
 	pwm_enable_OC1A();
-	pwm_enable_OC1B();
+	pwm_Change_Output_Mode(PWM_OUTPUT_MODE_0);
 
 	
 }
 
 void pwm_Change_Output_Mode(PWM_Output_Mode_t mode)
-{
+{	
+	// end here if new mode is the same
+	if(mode == current_pwm_mode) return;
+	
+	uint8_t soft_channels = 0;
 	if(mode > current_pwm_mode)
-	{
-		// enable diff channels
+	{	
+		for(uint8_t i = current_pwm_mode; i < MAX_HARDWARE_PWM_CHANNELS; i++)
+		{	
+			// enable hardware pwm
+			enable_hardware_timers_tab[i]();
+		}
 	}else if(mode < current_pwm_mode)
 	{
-		// disable diff chnnels 
+		for(uint8_t i = (mode + 1); i < MAX_HARDWARE_PWM_CHANNELS; i++)	//do not turn off the current == mode, so add 1
+		{
+			// disable hardware pwm
+			disable_hardware_timers_tab[i]();
+		}
 	}
+	// calculate number of soft pwm
+	if(mode < MAX_HARDWARE_PWM_CHANNELS)
+		soft_channels = 0;
+	else
+		soft_channels = (mode + 1) - MAX_HARDWARE_PWM_CHANNELS; // 0 cout to , add 1 
+	// set number of soft channels
+	enabled_soft_pwm_chnnels = soft_channels;
+	// assign new mode
+	current_pwm_mode = mode;
 	
 }
 
@@ -155,9 +183,9 @@ void pwm_disable_OC2B(void)
 void pwm_Soft_enable(uint8_t nr_channals)
 {
 	
-	if(nr_channals > 6) enbled_soft_pwm_chnnels = MAX_SOFT_PWM_CHANNELS;
-	else enbled_soft_pwm_chnnels = nr_channals;
-	for(uint8_t i = 0 ; i < enbled_soft_pwm_chnnels; i++)
+	if(nr_channals > 6) enabled_soft_pwm_chnnels = MAX_SOFT_PWM_CHANNELS;
+	else enabled_soft_pwm_chnnels = nr_channals;
+	for(uint8_t i = 0 ; i < enabled_soft_pwm_chnnels; i++)
 	{
 		DDRC |= (1 << i); // set pin as out
 	}
@@ -200,7 +228,7 @@ void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value)
 ISR(TIMER0_COMPA_vect){
 	static uint8_t cnt ;
 	static uint8_t time_sub_tick;
-	for(uint8_t i = 0; i < enbled_soft_pwm_chnnels; i++)
+	for(uint8_t i = 0; i < enabled_soft_pwm_chnnels; i++)
 	{
 		if(pwm_channel_duty_list[i] > cnt) PORTC |= (1 << i); else PORTC &= ~(1 << i);
 	}
