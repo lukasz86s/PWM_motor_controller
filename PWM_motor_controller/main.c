@@ -21,6 +21,10 @@ int main(void)
 	rs232_Init(9600, timer_get_time_ms);
 	pwm_Set_Duty(PWM_CHANNEL_2, 50);
 	pwm_Set_Duty(PWM_CHANNEL_1, 50);
+	pwm_Set_Duty(PWM_CHANNEL_3, 50);
+	pwm_Set_Duty(PWM_CHANNEL_4, 50);
+	pwm_Set_Duty(PWM_CHANNEL_5, 50);
+	pwm_Set_Duty(PWM_CHANNEL_6, 50);
 
 	// enable global interrupt 
 	sei(); 
