@@ -62,7 +62,7 @@ ISR(USART_RX_vect)
 	temp_head = (RxHead + 1) & RS232_RX_BUF_MASK;
 	if(temp_head == RxTail)
 	{
-		// TODO: overwrite data error handler
+		//TODO: overwrite data error handler
 	}else
 	{
 		RxHead = temp_head;
@@ -137,7 +137,7 @@ uint8_t get_rx_buff_data_size(void)
 		calculate_new_data_size = (RS232_RX_BUF_SIZE - tail) + head;
 	return calculate_new_data_size;
 }
-// TODO: add enum errors , add timeout error 
+//TODO: add enum errors , add timeout error 
 uint8_t* rs232_Get_Frame(void)
 {	
 	//check if buff has minimum size of frame
@@ -156,7 +156,8 @@ uint8_t* rs232_Get_Frame(void)
 	frame_buff[0] = frame_length;
 	uint8_t expected_data_size = frame_length - 1;
 	uint8_t data_size_in_buff = get_rx_buff_data_size();
-	// wait for the rest of the frame TODO: add timeotu to prevent lock(callback read_miliseconds)
+	// wait for the rest of the frame 
+	//TODO: consider create error: timeout 
 	uint32_t time_start = time_1ms_callback(); 
 	while(data_size_in_buff < expected_data_size)
 		data_size_in_buff = get_rx_buff_data_size();

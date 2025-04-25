@@ -9,7 +9,7 @@ class CommunicationGui(tk.Tk):
         super().__init__()
         self.title("MCU Communication Tester")
         self.serial_conn = None  # Variable for the serial connection
-        self.cmd_map = {"write":1, "read":2, "write many": 3}
+        self.cmd_map = {"write":1, "read":2, "write many": 3, "write settings": 4}
         self.sheduled_connection_status_id = None
 
         # --- Top Section ---
@@ -44,9 +44,11 @@ class CommunicationGui(tk.Tk):
         self.cmd_combo = ttk.Combobox(lower_frame, values=list(self.cmd_map.keys()), state="disabled")
         self.cmd_combo.grid(row=0, column=1, padx=5)
         self.cmd_combo.current(0)
-        
+        self.cmd_combo.bind("<<ComboboxSelected>>", self.update_cmd)
+        #---------------------------
         # Channel count selection
-        ttk.Label(lower_frame, text="Channel cnt:").grid(row=0, column=2, padx=5)
+        self.chn_cnt_label = ttk.Label(lower_frame, text="Channel cnt:")
+        self.chn_cnt_label.grid(row=0, column=2, padx=5)
         self.chn_cnt_combo = ttk.Combobox(lower_frame, values=[str(i) for i in range(1, 11)], state="disabled")
         self.chn_cnt_combo.grid(row=0, column=3, padx=5)
         self.chn_cnt_combo.current(0)
@@ -119,16 +121,19 @@ class CommunicationGui(tk.Tk):
     
     def update_channels(self, event=None):
         """Dynamically creates channel selection widgets based on the selected count."""
+        #restore default behawior of chn_cnt_combo
+        self.chn_cnt_label.config(text="Channel cnt:")
+        self.chn_cnt_combo.bind("<<ComboboxSelected>>", self.update_channels)
         # Remove previous widgets
         for widget in self.channels_frame.winfo_children():
             widget.destroy()
         self.channel_widgets = []
-        
+
         try:
             count = int(self.chn_cnt_combo.get())
         except ValueError:
             count = 1
-
+        # TODO: set write CMD to one cnt field
         # Add headers for the channel selection area
         header_channel = ttk.Label(self.channels_frame, text="Channel", font=('TkDefaultFont', 10, 'bold'))
         header_channel.grid(row=0, column=0, padx=5, pady=2)
@@ -148,21 +153,45 @@ class CommunicationGui(tk.Tk):
             self.channel_widgets.append((cb, entry))
     # TODO: add sendign buff with sending sheduler 
     
+    def update_cmd(self, event=None):
+        """Dynamically creates widgets based on the selected command ."""
+        #read comand
+        cmd = ""
+        try:
+            cmd = str(self.cmd_combo.get())
+        except ValueError:
+            cmd = "write"
+        if cmd == "write settings":
+        # Remove previous widgets
+            for widget in self.channels_frame.winfo_children():
+                widget.destroy()
+            self.channel_widgets = []
+            self.chn_cnt_combo.unbind("<<ComboboxSelected>>")
+            self.chn_cnt_label.config(text="number of PWM:")
+
+        else:
+            self.update_channels()
+
     def send(self):
         """Sends data by retrieving and validating user inputs from the interface."""
-        cmd = self.cmd_map[self.cmd_combo.get()]
+        cmd_str = self.cmd_combo.get()
+        cmd = self.cmd_map[cmd_str]
         channels_data = []
-        for _, (cb, entry) in enumerate(self.channel_widgets, start=1):
-            channel_number = int(cb.get())
-            try:
-                value = int(entry.get())
-                if not 0 <= value <= 100:
-                    raise ValueError("Value out of range")
-            except Exception as e:
-                messagebox.showerror("Input Error", f"Channel {channel_number} error: {e}")
-                return
+        if cmd_str == "write settings":
+            channel_number = int(self.chn_cnt_combo.get())
             channels_data.append(channel_number)
-            channels_data.append(value)
+        else:
+            for _, (cb, entry) in enumerate(self.channel_widgets, start=1):
+                channel_number = int(cb.get())
+                try:
+                    value = int(entry.get())
+                    if not 0 <= value <= 100:
+                        raise ValueError("Value out of range")
+                except Exception as e:
+                    messagebox.showerror("Input Error", f"Channel {channel_number} error: {e}")
+                    return
+                channels_data.append(channel_number)
+                channels_data.append(value)
 
         frame_to_send = create_frame(cmd, channels_data)
         #clear input buffer

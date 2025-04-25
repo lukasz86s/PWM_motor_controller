@@ -28,7 +28,7 @@ static volatile uint16_t pwm_pin_list[NUMBER_OF_CHANNELS] = {PWM_PINOUT_1, PWM_P
 // functions
 void pwm_Timer1_Init(void);
 void pwm_Timer2_Init(void);
-void pwm_Change_Output_Mode(PWM_Output_Mode_t mode);
+
 // enabling hardware channels
 void pwm_enable_OC1A(void);
 void pwm_enable_OC1B(void);
@@ -69,7 +69,7 @@ void pwm_Init (void)
 	pwm_Timer1_Init();
 	pwm_Timer2_Init();
 	pwm_enable_OC1A();
-	pwm_Change_Output_Mode(PWM_OUTPUT_MODE_5);
+	pwm_Change_Output_Mode(PWM_OUTPUT_MODE_0);
 
 	
 }

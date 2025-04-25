@@ -33,15 +33,17 @@ const uint8_t ping_frame[] = {0x55, 0x4,PING_CMD, 0x73, 0xC3};
 
 typedef enum{
 	FRAME_LEN,
-	CMD,
+	FUNCTION,
 	CHANNELS_TO_SET,
-	FIRST_CHANNELS_DATA,
+	ENABLED_CHANNELS_MODE = 3,
+	FIRST_CHANNELS_DATA= 3,
 	}Frame_Fields_Enum;
 
 typedef struct 
 {	
 	uint8_t function;
 	uint8_t channels_to_set;
+	uint8_t enabled_channels_mode;
 	uint8_t channel_number[MAX_PWM_CHANNELS];
 	uint8_t channel_value[MAX_PWM_CHANNELS];
 	}Frame_Fields;
@@ -80,8 +82,13 @@ uint8_t parse_frame(void)
 	if(crc != crc_score)
 		return CRC16_CHECK_ERROR;
 		
-	PWM_Channel_Cofnig.function = data[CMD];
-	if(PWM_Channel_Cofnig.function == PING_CMD) return NO_ERROR ; // no need to copy empty config 
+	PWM_Channel_Cofnig.function = data[FUNCTION];
+	if(PWM_Channel_Cofnig.function == PING_CMD) return NO_ERROR ; // no need to copy empty config
+	else if(PWM_Channel_Cofnig.function == WRITE_SETTINGS_CMD)
+	{
+		PWM_Channel_Cofnig.enabled_channels_mode = data[ENABLED_CHANNELS_MODE];
+		return NO_ERROR;
+	}
 	PWM_Channel_Cofnig.channels_to_set = data[CHANNELS_TO_SET];
 	if(len - CONST_FRAME_LEN - CRC_BYTES_LEN != data[CHANNELS_TO_SET]*2)
 		return DATA_LEN_ERROR;
@@ -152,7 +159,10 @@ void print_pwm_stat(Frame_Fields * stats)
 				break;
 			}
 		case WRITE_SETTINGS_CMD:
-			break;
+			{
+				pwm_Change_Output_Mode(PWM_Channel_Cofnig.enabled_channels_mode);
+				break;
+			}
 		case PING_CMD:
 			{	
 				rs232_Send_Data(ping_frame, RESPONSE_STATUS_LEN );
