@@ -239,18 +239,47 @@ uint32_t timer_get_time_ms(void)
 void pwm_Set_Duty(PWM_Channel_t channel, uint8_t value)
 {
 	if(value > 100)value = 100;
-	if (channel == 0) OCR1A = TIM1_PROCENT_TO_PWM(value);
-	else if (channel == 1) OCR1B = TIM1_PROCENT_TO_PWM(value);
+	// calculate percent before atomic to reduce lock time
+	if(channel < 2)
+	{
+		uint16_t tim1_percent = TIM1_PROCENT_TO_PWM(value);
+		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+		{
+			if (channel == 0) OCR1A = tim1_percent;
+			else OCR1B = tim1_percent;
+		}
+	}
 	else if (channel == 2) OCR2A = TIM2_PROCENT_TO_PWM(value);
 	else if (channel == 3) OCR2B = TIM2_PROCENT_TO_PWM(value);
 	else
 	{
+		pwm_channel_duty_list[channel - MAX_HARDWARE_PWM_CHANNELS] = value;
+	}
+	
+}
+
+uint8_t pwm_Get_Duty(uint8_t channel)
+{
+	uint8_t channel_value = 0xFF; // max channel val = 100, more means error
+	if(channel < 2)
+	{
 		ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
 		{
-			pwm_channel_duty_list[channel - MAX_HARDWARE_PWM_CHANNELS] = value;
-		}
+			if (channel == 0) channel_value = OCR1A;
+			else  channel_value = OCR1B ;
+		}	
 	}
+	else if (channel == 2) channel_value = OCR2A ;
+	else if (channel == 3) channel_value = OCR2B ;
+	else
+	{
+		channel_value = pwm_channel_duty_list[channel - MAX_HARDWARE_PWM_CHANNELS] ;
+	}
+	
+	return channel_value;
+	
 }
+
 
 ISR(TIMER0_COMPA_vect){
 	static uint8_t cnt ;

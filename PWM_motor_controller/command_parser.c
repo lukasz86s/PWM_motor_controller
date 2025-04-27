@@ -17,18 +17,19 @@
 	#define MAX_PWM_CHANNELS 10
 #endif
 
+#define START_BYTES 1
 #define CRC_BYTES_LEN 2
 #define CONST_FRAME_LEN 3
+#define MAX_RESPONSE_FRAME_LEN START_BYTES + CONST_FRAME_LEN + (MAX_PWM_CHANNELS * 2) + CRC_BYTES_LEN
 
 #define PING 0
 #define RESPONSE_STATUS_LEN 5
-// TODO: create function crate status frame 
+// TODO: create function, create status frame 
+// TODO: create ping On/OFF mechanism
 const uint8_t empty_buffer_error_frame[] = {0x55, 0x4, EMPTY_BUFFER_ERROR, 0xD0, 0xA2 };
 const uint8_t crc16_check_error_frame[] = {0x55, 0x4,CRC16_CHECK_ERROR, 0xD1, 0xE2};
 const uint8_t data_len_error_frame[] = {0x55, 0x4,DATA_LEN_ERROR, 0x11, 0x23 };
 const uint8_t ping_frame[] = {0x55, 0x4,PING_CMD, 0x73, 0xC3};
-
-
 
 
 typedef enum{
@@ -49,6 +50,9 @@ typedef struct
 	}Frame_Fields;
 	
 Frame_Fields PWM_Channel_Cofnig;
+uint8_t response_frame [MAX_RESPONSE_FRAME_LEN];
+
+uint8_t create_read_channels_values_frame(uint8_t channels_to_read);
 
 /**
  * @brief calculate crc16
@@ -67,7 +71,7 @@ uint16_t calculate_crc(const uint8_t *data, uint8_t length)
 	}
 	return crc;
 }
-	
+// TODO: remove write_cmd , write_many of len 1 do the same 
 uint8_t parse_frame(void)
 {
 	//TODO: change to const data
@@ -118,6 +122,33 @@ void print_pwm_stat(Frame_Fields * stats)
 	rs232_Send_Data(stats->channel_value, stats->channels_to_set);
 	
 }
+/**
+ * @brief create a frame that responds to READ_CMD
+ * 
+ * @param channels_to_read -> number of data to read form PWM_Channel_Cofnig.channels_number
+ * @return number bytes to send
+ */
+uint8_t create_read_channels_values_frame(uint8_t channels_to_read)
+{
+	uint8_t frame_len = 0;
+	// start byte
+	response_frame[frame_len++] = 0x55;
+	// len byte
+	response_frame[frame_len++] = CONST_FRAME_LEN + (2*channels_to_read);
+	// function 
+	response_frame[frame_len++] = READ_CMD;
+	// number of readed channels
+	response_frame[frame_len++] = channels_to_read;
+	for(uint8_t i = 0; i < channels_to_read; i++){
+		uint8_t channel_nr = PWM_Channel_Cofnig.channel_number[i];
+		response_frame[frame_len++] = channel_nr;
+		response_frame[frame_len++] = pwm_Get_Duty(channel_nr);
+	}
+	uint16_t crc_score = calculate_crc(&response_frame[1], (frame_len - 1));  // calculate crc without start byte
+	response_frame[frame_len++] = (crc_score >> 8) & 0xFF;					  // high byte
+	response_frame[frame_len++] = crc_score & 0xFF;							  // low byte
+	return frame_len;
+}
 
 /**
  * @brief 
@@ -149,7 +180,12 @@ void print_pwm_stat(Frame_Fields * stats)
 				break;				
 			}
 		case READ_CMD:
-			break;
+			{	
+				// TODO: test this function
+				uint8_t frame_len = create_read_channels_values_frame(PWM_Channel_Cofnig.channels_to_set);
+				rs232_Send_Data(response_frame, frame_len);
+				break;
+			}
 		case WRITE_MANY_CMD:
 			{
 				for(uint8_t i=0; i<PWM_Channel_Cofnig.channels_to_set; i++)
